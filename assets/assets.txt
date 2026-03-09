@@ -1,6 +1,8 @@
-background.png
+background.jpg
 bucket.png
 drop.mp3
 drop.png
 libgdx.png
 music.mp3
+result_bg.jpg
+splash.wav

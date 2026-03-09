@@ -22,6 +22,7 @@ public class GameScreen implements Screen {
     Texture bucketTexture;
     Texture dropTexture;
     Sound dropSound;
+    Sound splashSound;
     Music music;
     Sprite bucketSprite;
     Vector2 touchPos;
@@ -30,18 +31,22 @@ public class GameScreen implements Screen {
     Rectangle bucketRectangle;
     Rectangle dropRectangle;
     int dropsGathered;
+    boolean isSoundPlaying;
 
      public GameScreen(final Drop game) {
          this.game = game;
 
-         backgroundTexture = new Texture("background.png");
+         backgroundTexture = new Texture("background.jpg");
          bucketTexture = new Texture("bucket.png");
          dropTexture = new Texture("drop.png");
 
          dropSound = Gdx.audio.newSound(Gdx.files.internal("drop.mp3"));
+         splashSound = Gdx.audio.newSound(Gdx.files.internal("splash.wav"));
          music = Gdx.audio.newMusic(Gdx.files.internal("music.mp3"));
          music.setLooping(true);
          music.setVolume(0.5F);
+
+         this.game.font.setColor(Color.BLACK);
 
          bucketSprite = new Sprite(bucketTexture);
          bucketSprite.setSize(1, 1);
@@ -52,6 +57,8 @@ public class GameScreen implements Screen {
          dropRectangle = new Rectangle();
 
          dropSprites = new Array<>();
+
+         isSoundPlaying = false;
      }
 
     @Override
@@ -131,8 +138,19 @@ public class GameScreen implements Screen {
             dropSprite.translateY(-2f * delta);
             dropRectangle.set(dropSprite.getX(), dropSprite.getY(), dropWidth, dropHeight);
 
-            if (dropSprite.getY() < -dropHeight) dropSprites.removeIndex(i);
-            else if (bucketRectangle.overlaps(dropRectangle)) {
+            if (dropSprite.getY() < 0 && !isSoundPlaying) {
+                splashSound.play();
+                isSoundPlaying = true;
+            }
+
+            if (dropSprite.getY() < -dropHeight) {
+                dropSprites.removeIndex(i);
+
+                music.stop();
+                game.setScreen(new ResultScreen(game, dropsGathered));
+
+            }
+            else if (bucketRectangle.overlaps(dropRectangle) && bucketRectangle.height - 0.25f < dropSprite.getY()) {
                 dropsGathered++;
                 dropSprites.removeIndex(i);
                 dropSound.play();
@@ -158,7 +176,7 @@ public class GameScreen implements Screen {
         game.batch.draw(backgroundTexture, 0, 0, worldWidth, worldHeight);
         bucketSprite.draw(game.batch);
 
-        game.font.draw(game.batch, "Drops collected: " + dropsGathered, 0, worldHeight);
+        game.font.draw(game.batch, "Drops collected: " + dropsGathered, 0.25f, worldHeight - 0.25f);
 
         for (Sprite dropSprite : dropSprites) {
             dropSprite.draw(game.batch);
